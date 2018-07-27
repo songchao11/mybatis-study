@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="com.song.mybatis.dao.EmployeeMapper">
+ 
+	 <!-- 
+	 	eviction:缓存的回收策略：
+	 		LRU - 最近最少使用的：移除最长时间不被使用的对象
+	 		FIFO - 先进先出：按对象进入缓存的顺序来移除他们
+	 		SOFT - 软引用：移除基于垃圾回收器状态和软引用规则的对象
+	 		WEAK - 弱引用：更积极的移除基于垃圾收集器状态和弱引用规则的对象
+	 		默认使用：LRU
+	 	flushInterval：缓存刷新间隔：
+	 		缓存多长时间清空一次，默认不清空，设置一个毫秒值
+	 	readOnly：是否只读
+	 		true:只读，mybatis认为所有从缓存中获取数据的操作都是只读操作，不会修改数据。
+	 				mybatis为了加快获取速度，直接就会将数据在缓存中的引用交给用户。不安全，速度快
+	 		false:非只读，mybatis觉得获取的数据可能会被修改。
+	 				mybatis会利用序列化和反序列化的机制克隆一份新的数据给你。安全，速度慢
+	 	size:缓存存放多少元素
+	 	type:指定自定缓存的全类名
+	  -->
+  	<cache eviction="FIFO" flushInterval="600000" readOnly="false" size="1024"></cache>
+ 
+ 	<resultMap type="com.song.mybatis.bean.Employee" id="MyEmp">
+ 		<id column="id" property="id"/>
+ 		<result column="last_name" property="lastName"/>
+ 		<result column="gender" property="gender"/>
+ 		<result column="email" property="email" />
+ 		<result column="did" property="dept.id"/>
+ 		<result column="dept_name" property="dept.departmentName"/>
+ 	</resultMap>
+ 	
+ 	<resultMap type="com.song.mybatis.bean.Employee" id="MyEmp1">
+ 		<id column="id" property="id"/>
+ 		<result column="last_name" property="lastName"/>
+ 		<result column="gender" property="gender"/>
+ 		<result column="email" property="email" />
+ 		<!-- 
+ 			association:可以指定联合的javaBean对象
+ 			property:指定哪个属性是联合的对象
+ 			javaType:指定这个属性对象的类型（不能省略）
+ 		 -->
+ 		<association property="dept" javaType="com.song.mybatis.bean.Department">
+ 			<id column="did" property="id"/>
+ 			<result column="dept_name" property="departmentName"/>
+ 		</association>
+ 	</resultMap>
+ 	
+ 	<resultMap type="com.song.mybatis.bean.Employee" id="MyEmp2">
+ 		<id column="id" property="id"/>
+ 		<result column="last_name" property="lastName"/>
+ 		<result column="gender" property="gender"/>
+ 		<result column="email" property="email" />
+ 		<!-- 
+ 			association:定义关联对象的封装规则
+ 			select:表明当前属性是调用select指定的方法查询出的结果
+ 			column:指定将哪一列的值传给此方法
+ 			流程：使用select指定的方法(传入column指定的这列参数的值)，并封装给properties
+ 		 -->
+ 		<association property="dept" select="com.song.mybatis.dao.DepartmentMapper.selectDept"
+ 		column="d_id">
+ 			
+ 		</association>
+ 	</resultMap>
+ 
+ 	<select id="getEmpById" resultType="employee">
+ 		select * from tbl_employee where id=#{id}
+ 	</select>
+ 	
+ 	<!-- 
+ 		userGeneratedKeys="true": 使用自增主键获取主键值策略
+ 		keyProperty:指定对应的主键属性，也就是mybatis获取到主键值以后，将这个值封装给javaBean的哪个属性
+ 	 -->
+ 	<insert id="addEmp" useGeneratedKeys="true" keyProperty="id">
+ 		insert into tbl_employee(last_name, gender, email)
+ 		values(#{lastName}, #{gender}, #{email})
+ 	</insert>
+ 	<update id="updateEmp">
+ 		update tbl_employee
+ 		set last_name=#{lastName},gender=#{gender},email=#{email}
+ 		where id=#{id}
+ 	</update>
+ 	<delete id="deleteEmpById">
+ 		delete from tbl_employee where id=#{id}
+ 	</delete>
+ 	
+ 	<select id="selectEmployee" resultMap="MyEmp2">
+ 		select e.id id,e.last_name last_name,e.gender gender,e.email email,e.d_id d_id,d.id did,d.dept_name dept_name
+		from tbl_employee e,tbl_dept d
+		where e.d_id=d.id and e.id=#{id}
+ 	</select>
+ 	
+ 	<select id="selectEmpByStep" resultMap="MyEmpDis">
+ 		select * from tbl_employee where id=#{id}
+ 	</select>
+ 	
+ 	<select id="selectEmps" resultType="com.song.mybatis.bean.Employee">
+ 		select * from tbl_employee where d_id=#{did}
+ 	</select>
+ 	
+ 	<select id="selectEmps1" resultType="com.song.mybatis.bean.Employee">
+ 		select * from tbl_employee where d_id=#{did} and gender=#{gender}
+ 	</select>
+ 	
+ 	<!-- 
+ 		discriminator:鉴别器
+ 		mybatis可以使用discriminator判断某列的值，然后根据某列的值改变封装行为
+ 		封装Employee：
+ 			如果查出来的是女生：就把部门信息查询出来，否则不查询
+ 			如果查出来是男生：就把last_name这一列的值赋给email
+ 	 -->
+ 	 <resultMap type="com.song.mybatis.bean.Employee" id="MyEmpDis">
+ 		<id column="id" property="id"/>
+ 		<result column="last_name" property="lastName"/>
+ 		<result column="gender" property="gender"/>
+ 		<result column="email" property="email" />
+ 		<!-- 
+ 			column:指定判断的列名
+ 			javaType:列值对应的java类型
+ 		 -->
+ 		<discriminator javaType="string" column="gender">
+ 			<case value="女" resultType="com.song.mybatis.bean.Employee">
+ 				<association property="dept" select="com.song.mybatis.dao.DepartmentMapper.selectDept"
+		 		column="d_id">
+		 		</association>
+ 			</case>
+ 			<case value="男" resultType="com.song.mybatis.bean.Employee">
+ 				<id column="id" property="id"/>
+		 		<result column="last_name" property="lastName"/>
+		 		<result column="gender" property="gender"/>
+		 		<result column="last_name" property="email" />
+ 			</case>
+ 		</discriminator>
+ 		
+ 	</resultMap>
+ 	
+ </mapper>

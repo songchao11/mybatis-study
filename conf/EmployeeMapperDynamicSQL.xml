@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="com.song.mybatis.dao.EmployeeMapperDynamicSQL">
+ 	
+ 	<select id="getEmpsByConditionIf" resultType="com.song.mybatis.bean.Employee">
+ 		select * from tbl_employee
+ 		where 1=1
+ 		<if test="id != null">
+ 			and id=#{id}
+ 		</if>
+ 		<if test="lastName != null and lastName != ''">
+ 			and last_name=#{lastName}
+ 		</if>
+ 		<if test="gender != null and gender != ''">
+ 			and gender=#{gender}
+ 		</if>
+ 		<if test="email != null and email != ''">
+ 			and email=#{email}
+ 		</if>
+ 	</select>
+ 	
+ 	<select id="getEmpsByConditionTrim" resultType="com.song.mybatis.bean.Employee">
+ 		select * from tbl_employee
+ 		<!-- 
+ 			prefix="":前缀，trim标签体中是整个字符串拼串后的结果
+ 				prefix给拼串后的整个字符串加一个前缀
+ 			prefixOverrides="":前缀覆盖，去掉整个字符串前面多余的字符
+ 			suffix=""：后缀
+ 				suffix给拼串后的整个字符串加一个后缀
+ 			suffixOverrides="":后缀覆盖，去掉整个字符串后面多余的字符
+ 		 -->
+ 		<trim prefix="where" suffixOverrides="and">
+	 		<if test="id != null">
+	 			id=#{id} and
+	 		</if>
+	 		<if test="lastName != null and lastName != ''">
+	 			last_name=#{lastName} and
+	 		</if>
+	 		<if test="gender != null and gender != ''">
+	 			gender=#{gender} and
+	 		</if>
+	 		<if test="email != null and email != ''">
+	 			email=#{email}
+	 		</if>
+ 		</trim>
+ 	</select>
+ 	
+ 	<select id="getEmpsByConditionChoose" resultType="com.song.mybatis.bean.Employee">
+ 		select * from tbl_employee
+ 		<where>
+ 			<choose>
+ 				<when test="id != null">
+ 					id=#{id}
+ 				</when>
+ 				<when test="lastName != null">
+ 					last_name=#{lastName}
+ 				</when>
+ 				<when test="email != null">
+ 					email=#{email}
+ 				</when>
+ 				<otherwise>
+ 					gender="男"
+ 				</otherwise>
+ 			</choose>
+ 		</where>
+ 	</select>
+ 	
+ 	<update id="updateEmpByCondition">
+ 		update tbl_employee
+ 		<set>
+ 			<if test="lastName != null">
+ 				last_name=#{lastName},
+ 			</if>
+ 			<if test="email != null">
+ 				email=#{email},
+ 			</if>
+ 			<if test="gender != null">
+ 				gender=#{gender}
+ 			</if>
+ 		</set>
+ 		<where>
+ 			id=#{id}
+ 		</where>
+ 	</update>
+ 	
+ 	<select id="getEmpsByConditionForeach" resultType="com.song.mybatis.bean.Employee">
+ 		select * from tbl_employee where id in
+ 		<!-- 
+ 			collection:指定要遍历的集合
+ 				list类型的参数会特殊处理封装在map中，map的key就叫list
+ 			item:将当前遍历出的元素赋值给指定的变量
+ 			separator:每个元素之间的分隔符
+ 			open:遍历出所有结果拼接一个开始的字符
+ 			close:遍历所有结果拼接一个结束的字符
+ 			index:索引。遍历list的时候是index就是索引，item就是当前值
+ 				遍历map的时候index表示的就是map的key，item就是map的值
+ 		 -->
+ 		<foreach collection="ids" item="item_id" separator="," open="(" close=")">
+ 			#{item_id}
+ 		</foreach>
+ 	</select>	
+ 	
+ 	<insert id="insertEmps">
+ 		insert into tbl_employee(last_name,gender,email,d_id) values
+ 		<foreach collection="emps" item="emp" separator=",">
+ 			(#{emp.lastName}, #{emp.gender}, #{emp.email}, #{emp.dept.id})
+ 		</foreach>
+ 	</insert>
+ 	
+ </mapper>
