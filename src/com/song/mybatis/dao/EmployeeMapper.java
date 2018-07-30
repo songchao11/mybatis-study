@@ -13,4 +13,5 @@ public interface EmployeeMapper {
 	Employee selectEmpByStep(Integer id);
 	List<Employee> selectEmps(Integer did);
 	List<Employee> selectEmps1(Integer did, String gender);
+	List<Employee> selectEmployees();
 }

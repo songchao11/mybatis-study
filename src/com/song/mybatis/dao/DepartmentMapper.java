@@ -6,4 +6,5 @@ public interface DepartmentMapper {
 	Department selectDept(Integer id);
 	Department selectDeptPlus(Integer id);
 	Department selectDeptByStep(Integer id);
+	void addDept(Department dept);
 }

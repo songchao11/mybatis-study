@@ -17,6 +17,12 @@ public class Department implements Serializable {
 		super();
 		this.id = id;
 	}
+	
+	public Department(String departmentName) {
+		super();
+		this.departmentName = departmentName;
+	}
+
 	public Department() {
 		super();
 	}

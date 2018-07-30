@@ -6,7 +6,7 @@
  	
  	<select id="getEmpsByConditionIf" resultType="com.song.mybatis.bean.Employee">
  		select * from tbl_employee
- 		where 1=1
+ 		<where>
  		<if test="id != null">
  			and id=#{id}
  		</if>
@@ -19,6 +19,7 @@
  		<if test="email != null and email != ''">
  			and email=#{email}
  		</if>
+ 		</where>
  	</select>
  	
  	<select id="getEmpsByConditionTrim" resultType="com.song.mybatis.bean.Employee">

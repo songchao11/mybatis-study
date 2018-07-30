@@ -2,6 +2,7 @@ package com.song.mybatis.test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
@@ -9,7 +10,9 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.junit.Test;
 
+import com.song.mybatis.bean.Department;
 import com.song.mybatis.bean.Employee;
+import com.song.mybatis.dao.DepartmentMapper;
 import com.song.mybatis.dao.EmployeeMapper;
 
 public class CacheTest {
@@ -46,7 +49,7 @@ public class CacheTest {
 	 * 		使用：
 	 * 		1.开启全局二级缓存配置:<setting name="cacheEnabled" value="true"/>
 	 * 		2.在mapper.xml 中配置使用二级缓存
-	 * 		3.我们的POJO类需要实现序列化接口
+	 * 		3.我们的POJO类需要实现序列化接口	
 	 * 
 	 * 	和缓存有关的设置/属性:
 	 * 		1.cacheEnabled=true / false :关闭缓存（二级缓存关闭，一级缓存一直可用的）
@@ -58,6 +61,8 @@ public class CacheTest {
 	 * 		4.sqlSession.clearCache();只是清除当前session的一级缓存
 	 * 		5.localCacheScope:本地缓存作用域：（一级缓存SESSION）;当前会话的所有数据保存在会话缓存中；
 	 * 				STATEMENT:可以禁用一级缓存；
+	 * 	缓存的顺序:
+	 *		进来先看二级缓存，再看一级缓存，如果两个缓存中都没有数据，才会从数据库中去查
 	 * 
 	 */
 	@Test
@@ -68,6 +73,27 @@ public class CacheTest {
 			EmployeeMapper empMapper = sqlSession.getMapper(EmployeeMapper.class);
 			Employee emp1 = empMapper.getEmpById(1);
 			System.out.println(emp1);
+			Employee emp2 = empMapper.getEmpById(1);
+			System.out.println(emp2);
+			System.out.println(emp1 == emp2);
+		}finally{
+			sqlSession.close();
+		}
+	}
+	
+	@Test
+	public void testFirstLevelCache1() throws IOException{
+		SqlSessionFactory sqlSessionFactory = getSqlSessionFactory();
+		SqlSession sqlSession = sqlSessionFactory.openSession();
+		try{
+			EmployeeMapper empMapper = sqlSession.getMapper(EmployeeMapper.class);
+			DepartmentMapper deptMapper = sqlSession.getMapper(DepartmentMapper.class);
+			Employee emp1 = empMapper.getEmpById(1);
+			System.out.println(emp1);
+//			Employee e = new Employee(null,"lionkk","男","lionkk@qq.com",new Department(2));
+//			empMapper.addEmp(e);
+			Department dept = new Department("哈哈部");
+			deptMapper.addDept(dept);;
 			Employee emp2 = empMapper.getEmpById(1);
 			System.out.println(emp2);
 			System.out.println(emp1 == emp2);
@@ -95,6 +121,21 @@ public class CacheTest {
 			sqlSession2.close();
 		}
 		
+	}
+	
+	@Test
+	public void test3() throws Exception{
+		SqlSessionFactory sqlSessionFactory = getSqlSessionFactory();
+		SqlSession sqlSession = sqlSessionFactory.openSession();
+		try{
+			EmployeeMapper mapper = sqlSession.getMapper(EmployeeMapper.class);
+			List<Employee> emps = mapper.selectEmployees();
+			System.out.println(emps);
+			List<Employee> emps2 = mapper.selectEmployees();
+			System.out.println(emps2);
+		}finally{
+			sqlSession.close();
+		}
 	}
 	
 }

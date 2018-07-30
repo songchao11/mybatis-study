@@ -77,7 +77,7 @@ public class MybatisTest {
 		
 		try{
 			EmployeeMapper employeeMapper = sqlSession.getMapper(EmployeeMapper.class);
-			Employee employee = new Employee(3, "Rose", "Å®", "rose1@qq.com");
+			Employee employee = new Employee(1, "lionkk", "ÄÐ", "lionkk@qq.com");
 			employeeMapper.updateEmp(employee);
 			sqlSession.commit();
 		}finally{
